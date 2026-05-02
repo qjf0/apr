@@ -1,2 +1,6 @@
+@alpha 0.0.2:
+        Added a simple bash script 'make.sh' for compilation.
+        Improved the help() function, so now apr --help can be used to print the entire list of commands.
+
 @alpha 0.0.1:
 	This is the first version of apr, and it is not yet usable.

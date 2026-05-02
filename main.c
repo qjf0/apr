@@ -1,4 +1,4 @@
-/* apr @alpha 0.0.1
+/* apr @alpha 0.0.2
  * Maintainer: qjf0 <https://github.com/qjf0>
  *                  <qianjunfan0@outlook.com>
  */
@@ -70,7 +70,6 @@ struct mode modes[] = {
         {"--list",  list_print}
 };
 
-
 int main(int argc, char **argv)
 {
         /* Parse command line arguments */
@@ -78,7 +77,7 @@ int main(int argc, char **argv)
                 help();
                 return EXIT_SUCCESS;
         } else if (argc != 4) {
-                printf("Usage: %s <mode> <dir-> <.ext>\n", argv[0]);
+                printf("use 'apr --help' to view all available commands\n");
                 return EXIT_FAILURE;
         }
 
@@ -99,7 +98,6 @@ int main(int argc, char **argv)
         quit();
         return EXIT_SUCCESS;
 }
-
 
 void add(struct ent *e)
 {
@@ -182,7 +180,10 @@ char *trim(char *s)
 
 void help(void)
 {
-        printf("This is the output of help()...\n");
+        printf("usage: apr <operation> [...]\n");
+        printf("operations:\n");
+        printf("       pacman --help\n");
+        printf("       pacman --list [path] [ext]          List all items.\n");
 }
 
 char *readcmt(FILE *fp)
