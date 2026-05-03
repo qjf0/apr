@@ -1,4 +1,4 @@
-/* apr @alpha 0.0.2
+/* apr @alpha 0.0.3
  * Maintainer: qjf0 <https://github.com/qjf0>
  *                  <qianjunfan0@outlook.com>
  */
@@ -19,6 +19,11 @@ struct ent {
         int wday;
 };
 
+struct map_item {
+        int date;
+        int cnt;
+};
+
 /* Global Runtime */
 struct {
         char *dpath;
@@ -27,7 +32,15 @@ struct {
         struct ent *ents;
         int entc;
         int ecap;
+
+        struct map_item hmap[30][7];
 } rt;
+
+const char *mons[] = {
+        "Jan","Feb","Mar","Apr",
+        "May","Jun","Jul","Aug",
+        "Sep","Oct","Nov","Dec"
+};
 
 /* A filter that filters out files with the matching extension */
 int filter(const struct dirent *entry);
@@ -56,8 +69,20 @@ void help(void);
 /* Compare function for qsort() */
 int qcompare(const void *a, const void *b);
 
-/* Print out all the items */
+/* Get the current date in YYYY/MM/DD format */
+int get_today(void);
+
+/* Fill rt.hmap with counts and dates for the last 30 weeks */
+void gen_hmap(void);
+
+/* List out all the items */
 void list_print(void);
+
+/* Render Unicode heatmap (░, ▒, ▓, █) to terminal */
+void chmap_print(void);
+
+/* Just for debugging */
+void debug_print(void);
 
 /* Pattern matching structure */
 struct mode {
@@ -67,7 +92,9 @@ struct mode {
 
 #define MODC sizeof(modes)/sizeof(modes[0])
 struct mode modes[] = {
-        {"--list",  list_print}
+        {"--debug", debug_print},
+        {"--list",  list_print},
+        {"--chmap", chmap_print}
 };
 
 int main(int argc, char **argv)
@@ -182,8 +209,10 @@ void help(void)
 {
         printf("usage: apr <operation> [...]\n");
         printf("operations:\n");
-        printf("       pacman --help\n");
-        printf("       pacman --list [path] [ext]          List all items.\n");
+        printf("       apr --help                       To view all available commands\n\n");
+        printf("       apr --list [path] [ext]          List all items on your terminal\n\n");
+        printf("       apr --chmap [path] [ext]         Print out a text‑based heatmap using\n");
+        printf("                                        Unicode characters on your terminal\n");
 }
 
 char *readcmt(FILE *fp)
@@ -240,12 +269,6 @@ int getwday(int d)
         mktime(&t);
         return t.tm_wday;
 }
-
-const char *mons[] = {
-        "Jan","Feb","Mar","Apr",
-        "May","Jun","Jul","Aug",
-        "Sep","Oct","Nov","Dec"
-};
 
 struct ent *parse(const char *fpath)
 {
@@ -342,6 +365,26 @@ int qcompare(const void *a, const void *b)
 
 void debug_print(void)
 {
+       	int w, d, n, dt, td = get_today();
+	const char *ws[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+	gen_hmap();
+	printf("Debug Heatmap:\n\n");
+	for (d = 0; d < 7; d++) {
+		printf("        %s", ws[d]);
+		for (w = 0; w < 30; w++) {
+			n = rt.hmap[w][d].cnt;
+			dt = rt.hmap[w][d].date;
+			if (dt > td)
+				printf("  *");
+			else
+				printf("%3d", n);
+		}
+		printf("\n");
+	}
+	printf("\n        Latest: %d, *:Future\n",
+	       rt.entc > 0 ? rt.ents[0].date : 0);
+
         for (int i = 0; i < rt.entc; ++i) {
                 struct ent *e = &rt.ents[i];
                 printf("[%d] %s\n", i + 1, e->filename);
@@ -367,4 +410,83 @@ void list_print(void)
 
                 printf("\t%s %s - %s\n", e->set, e->id, e->title);
         }
+}
+
+int get_today(void)
+{
+	time_t t = time(NULL);
+	struct tm *m = localtime(&t);
+	return (m->tm_year + 1900) * 10000 + (m->tm_mon + 1) * 100 + m->tm_mday;
+}
+
+void gen_hmap(void)
+{
+	int i, w, d, today;
+	time_t now = time(NULL);
+	struct tm *m = localtime(&now);
+	struct tm stm = *m;
+
+	memset(rt.hmap, 0, sizeof(rt.hmap));
+	stm.tm_mday -= m->tm_wday + (29 * 7);
+	stm.tm_hour = 12;
+	stm.tm_min = stm.tm_sec = 0;
+	stm.tm_isdst = -1;
+	time_t st = mktime(&stm);
+
+	for (i = 0; i < rt.entc; i++) {
+		struct ent *e = &rt.ents[i];
+		struct tm et = {0};
+		et.tm_year = (e->date / 10000) - 1900;
+		et.tm_mon = ((e->date / 100) % 100) - 1;
+		et.tm_mday = e->date % 100;
+		et.tm_hour = 12;
+		et.tm_isdst = -1;
+		int diff = (int)(difftime(mktime(&et), st) / 86400 + 0.5);
+		if (diff >= 0 && diff < 210) {
+			rt.hmap[diff / 7][diff % 7].cnt++;
+			rt.hmap[diff / 7][diff % 7].date = e->date;
+		}
+	}
+
+	for (i = 0; i < 210; i++) {
+		w = i / 7; d = i % 7;
+		if (!rt.hmap[w][d].date) {
+			struct tm tt = *localtime(&st);
+			tt.tm_mday += i;
+			mktime(&tt);
+			rt.hmap[w][d].date = (tt.tm_year + 1900) * 10000 +
+					     (tt.tm_mon + 1) * 100 + tt.tm_mday;
+		}
+	}
+}
+
+void chmap_print(void)
+{
+	int w, d, n, dt, td = get_today();
+	const char *ws[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	const char *gs[] = {" ░", " ▒", " ▓", " █"};
+
+	gen_hmap();
+
+	printf("Activity log and heatmap (C-port).\n\n");
+	for (d = 0; d < 7; d++) {
+		printf("        %s", ws[d]);
+		for (w = 0; w < 30; w++) {
+			n = rt.hmap[w][d].cnt;
+			dt = rt.hmap[w][d].date;
+			if (dt > td)
+			        printf(" *");
+			else if (!n)
+			        printf("%s", gs[0]);
+			else
+			        printf("%s", gs[n > 8 ? 3 : (n > 3 ? 2 : 1)]);
+		}
+
+		printf("\n");
+	}
+
+	printf("\n        Latest: %d, ░:0, ▒:(0,3], ▓:(3,8], █:(8,∞), *:Future\n",
+	       rt.entc > 0 ? rt.ents[0].date : 0);
+
+	printf("        ------------------------------------------------------\n\n");
 }
