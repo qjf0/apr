@@ -1,5 +1,8 @@
+@alpha 0.0.4:
+        Optimized the display of the '--chmap' mode.
+
 @alpha 0.0.3:
-        The '--chmap' mode is now available for printing heatmaps to terminal.
+        The '--chmap' mode is now available for printing heatmaps to the terminal.
         Fixed some silly mistakes in help().
 
 @alpha 0.0.2:

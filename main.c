@@ -1,7 +1,9 @@
-/* apr @alpha 0.0.3
+/* apr @alpha 0.0.4
  * Maintainer: qjf0 <https://github.com/qjf0>
  *                  <qianjunfan0@outlook.com>
+ *                  <qianjunfan0@gmail.com>
  */
+
 #include <time.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -463,12 +465,13 @@ void gen_hmap(void)
 void chmap_print(void)
 {
 	int w, d, n, dt, td = get_today();
+
 	const char *ws[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 	const char *gs[] = {" ░", " ▒", " ▓", " █"};
 
 	gen_hmap();
 
-	printf("Activity log and heatmap (C-port).\n\n");
+	printf("Activity log and heatmap:\n\n");
 	for (d = 0; d < 7; d++) {
 		printf("        %s", ws[d]);
 		for (w = 0; w < 30; w++) {
@@ -487,6 +490,5 @@ void chmap_print(void)
 
 	printf("\n        Latest: %d, ░:0, ▒:(0,3], ▓:(3,8], █:(8,∞), *:Future\n",
 	       rt.entc > 0 ? rt.ents[0].date : 0);
-
-	printf("        ------------------------------------------------------\n\n");
+	printf("        ---------------------------------------------------------------\n\n");
 }
