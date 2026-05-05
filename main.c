@@ -1,4 +1,6 @@
-/* apr @alpha 0.0.4
+/* apr @alpha 0.0.5
+ * https://github.com/qjf0/apr
+ *
  * Maintainer: qjf0 <https://github.com/qjf0>
  *                  <qianjunfan0@outlook.com>
  *                  <qianjunfan0@gmail.com>
@@ -16,7 +18,8 @@ struct ent {
         char *set;
         char *id;
         char *title;
-        char *comment;
+        char **comments;
+        int cmtc;
         int date;
         int wday;
 };
@@ -52,6 +55,9 @@ char *readcmt(FILE *fp);
 
 /* Get the day of the week based on the date */
 int getwday(int d);
+
+/* Transfer number (like 20260405) to a string (like Apr 5, 2026) */
+char* ntod(int date);
 
 /* Parse a file, extract set/id/date, title and detailed comment */
 struct ent *parse(const char *fpath);
@@ -130,34 +136,39 @@ int main(int argc, char **argv)
 
 void add(struct ent *e)
 {
-       if (rt.entc >= rt.ecap) {
-               rt.ecap = rt.ecap ? rt.ecap * 2 : 4;
-               rt.ents = realloc(rt.ents, rt.ecap * sizeof(struct ent));
-       }
+	if (rt.entc >= rt.ecap) {
+		rt.ecap = rt.ecap ? rt.ecap * 2 : 4;
+		rt.ents = realloc(rt.ents, rt.ecap * sizeof(struct ent));
+	}
 
-       rt.ents[rt.entc++] = (struct ent) {
-               .filename = strdup(e->filename),
-               .set = strdup(e->set ? e->set : ""),
-               .id = strdup(e->id ? e->id : ""),
-               .title = strdup(e->title ? e->title : ""),
-               .comment = strdup(e->comment ? e->comment : ""),
-               .date = e->date,
-               .wday = e->wday
-       };
+	struct ent *target = &rt.ents[rt.entc++];
+	target->filename = strdup(e->filename);
+	target->set = strdup(e->set ? e->set : "");
+	target->id = strdup(e->id ? e->id : "");
+	target->title = strdup(e->title ? e->title : "");
+	target->date = e->date;
+	target->wday = e->wday;
+	target->cmtc = e->cmtc;
+
+	target->comments = malloc(sizeof(char *) * e->cmtc);
+	for (int i = 0; i < e->cmtc; i++)
+		target->comments[i] = strdup(e->comments[i]);
 }
 
 void quit(void)
 {
-        for (int i = 0; i < rt.entc; ++i) {
-                free(rt.ents[i].filename);
-                free(rt.ents[i].set);
-                free(rt.ents[i].id);
-                free(rt.ents[i].title);
-                free(rt.ents[i].comment);
-        }
-        free(rt.ents);
-        rt.ents = NULL;
-        rt.entc = rt.ecap = 0;
+	for (int i = 0; i < rt.entc; ++i) {
+		free(rt.ents[i].filename);
+		free(rt.ents[i].set);
+		free(rt.ents[i].id);
+		free(rt.ents[i].title);
+		for (int j = 0; j < rt.ents[i].cmtc; j++)
+			free(rt.ents[i].comments[j]);
+		free(rt.ents[i].comments);
+	}
+	free(rt.ents);
+	rt.ents = NULL;
+	rt.entc = rt.ecap = 0;
 }
 
 void load(void)
@@ -272,97 +283,75 @@ int getwday(int d)
         return t.tm_wday;
 }
 
-struct ent *parse(const char *fpath)
-{
-        FILE *fp = fopen(fpath, "r");
-
-        if (!fp)
-                return NULL;
-
-        char *block = readcmt(fp);
-        fclose(fp);
-
-        if (!block || !*block) {
-                free(block);
-                return NULL;
-        }
-
-        struct ent *e = calloc(1, sizeof(struct ent));
-        const char *slash = strrchr(fpath, '/');
-        e->filename = strdup(slash ? slash + 1 : fpath);
-        char *line = strtok(block, "\n");
-        int state = 0;
-
-        while (line) {
-                char *trimmed = trim(line);
-
-                if (*trimmed == '*') {
-                        trimmed++;
-                        if (isspace((unsigned char)*trimmed))
-                                trimmed++;
-                }
-
-                if (*trimmed == '\0') {
-                        if (state >= 2) {
-                                if (!e->comment)
-                                        e->comment = strdup("");
-                                char *tmp;
-                                asprintf(&tmp, "%s%s", e->comment,
-                                         (strlen(e->comment) ? "\n" : ""));
-                                free(e->comment);
-                                e->comment = tmp;
-                        }
-                        line = strtok(NULL, "\n");
-                        continue;
-                }
-
-                if (state == 0) {
-                        char setb[256], idb[256], dateb[256];
-                        if (sscanf(trimmed, "%255s / %255s / %255[^\n]",
-                                   setb, idb, dateb) == 3) {
-                                e->set = strdup(setb);
-                                e->id = strdup(idb);
-                                int y, m, d;
-                                char mon[16];
-                                if (sscanf(dateb, "%15s %d, %d", mon,
-                                           &d, &y) == 3) {
-
-                                        for (m = 1; m <= 12; m++)
-                                                if (strcmp(mon,
-                                                   mons[m-1]) == 0)
-                                                        break;
-                                        e->date = y * 10000 + m * 100 + d;
-                                }
-                        }
-                        state = 1;
-                } else if (state == 1) {
-                        e->title = strdup(trimmed);
-                        state = 2;
-                } else {
-                        if (!e->comment)
-                                e->comment = strdup("");
-                        char *tmp;
-                        asprintf(&tmp, "%s%s%s", e->comment,
-                                 (strlen(e->comment) ? "\n" : ""),
-                                 trimmed);
-                        free(e->comment);
-                        e->comment = tmp;
-                }
-
-                line = strtok(NULL, "\n");
-        }
-
-        e->wday = getwday(e->date);
-
-        free(block);
-        return e;
-}
-
 int qcompare(const void *a, const void *b)
 {
         const struct ent *ea = (const struct ent *)a;
         const struct ent *eb = (const struct ent *)b;
         return eb->date - ea->date;
+}
+
+struct ent *parse(const char *fpath)
+{
+	FILE *fp = fopen(fpath, "r");
+	if (!fp)
+		return NULL;
+
+	char *block = readcmt(fp);
+	fclose(fp);
+
+	if (!block || !*block) {
+		free(block);
+		return NULL;
+	}
+
+	struct ent *e = calloc(1, sizeof(struct ent));
+	const char *slash = strrchr(fpath, '/');
+	e->filename = strdup(slash ? slash + 1 : fpath);
+
+	char *line = strtok(block, "\n");
+	int state = 0;
+
+	while (line) {
+		char *trimmed = trim(line);
+
+		if (*trimmed == '*') {
+			trimmed++;
+			if (isspace((unsigned char)*trimmed))
+				trimmed++;
+		}
+
+		if (state == 0) {
+			char setb[256], idb[256], dateb[256];
+			if (sscanf(trimmed, "%255s / %255s / %255[^\n]",
+				   setb, idb, dateb) == 3) {
+				e->set = strdup(setb);
+				e->id = strdup(idb);
+				int y, m, d;
+				char mon[16];
+				if (sscanf(dateb, "%15s %d, %d", mon, &d, &y) == 3) {
+					for (m = 1; m <= 12; m++)
+						if (!strcmp(mon, mons[m-1]))
+							break;
+					e->date = y * 10000 + m * 100 + d;
+				}
+			}
+			state = 1;
+		} else if (state == 1) {
+			if (*trimmed != '\0') {
+				e->title = strdup(trimmed);
+				state = 2;
+			}
+		} else {
+			e->comments = realloc(e->comments,
+					      sizeof(char *) * (e->cmtc + 1));
+			e->comments[e->cmtc++] = strdup(trimmed);
+		}
+		line = strtok(NULL, "\n");
+	}
+
+	e->wday = getwday(e->date);
+	free(block);
+	return e;
 }
 
 void debug_print(void)
@@ -387,32 +376,70 @@ void debug_print(void)
 	printf("\n        Latest: %d, *:Future\n",
 	       rt.entc > 0 ? rt.ents[0].date : 0);
 
-        for (int i = 0; i < rt.entc; ++i) {
-                struct ent *e = &rt.ents[i];
-                printf("[%d] %s\n", i + 1, e->filename);
-                printf("Set:     %s\n", e->set ? e->set : "NONE");
-                printf("ID:      %s\n", e->id ? e->id : "NONE");
-                printf("Title:   %s\n", e->title ? e->title : "NONE");
-                printf("Date:    %d\n", e->date);
-                printf("Wday:    %d\n", e->wday);
-                if (e->comment && e->comment[0])
-                        printf("Comment:\n%s\n", e->comment);
-        }
+	for (int i = 0; i < rt.entc; ++i) {
+			struct ent *e = &rt.ents[i];
+			printf("[%d] %s\n", i + 1, e->filename);
+			printf("Set:     %s\n", e->set ? e->set : "NONE");
+			printf("ID:      %s\n", e->id ? e->id : "NONE");
+			printf("Title:   %s\n", e->title ? e->title : "NONE");
+			printf("Date:    %d\n", e->date);
+			if (e->cmtc > 0) {
+				printf("Comments:\n");
+				for (int j = 0; j < e->cmtc; j++)
+					printf("  %s\n", e->comments[j]);
+			}
+		}
 }
 
 void list_print(void)
 {
-        int latest = rt.ents[0].date + 1;
-        for (int i = 0; i < rt.entc; ++i) {
-                struct ent *e = &rt.ents[i];
-                if (e->date < latest) {
-                        latest = e->date;
-                        printf("%d:\n", e->date);
-                }
+	int latest = -1;
+	int i, j;
 
-                printf("\t%s %s - %s\n", e->set, e->id, e->title);
-        }
+	for (i = 0; i < rt.entc; ++i) {
+		struct ent *e = &rt.ents[i];
+
+		if (e->date != latest) {
+			latest = e->date;
+			printf("\n\033[1m%s:\033[0m\n", ntod(e->date));
+		}
+
+		char desc[128];
+		snprintf(desc, sizeof(desc), "%s %s - %s",
+			 e->set, e->id, e->title);
+
+
+		printf("\t%-66s \033[90m[%s]\033[0m\n", desc, e->filename);
+
+		for (j = 0; j < e->cmtc; ++j) {
+			if (e->comments[j][0] == '\0')
+				continue;
+			printf("\t\033[32m%s\033[0m\n", e->comments[j]);
+		}
+
+		if (i + 1 < rt.entc && rt.ents[i + 1].date == e->date)
+			printf("\n");
+	}
 }
+
+char* ntod(int date)
+{
+	static char buf[64];
+	int y, m, d;
+
+	y = date / 10000;
+	m = (date / 100) % 100;
+	d = date % 100;
+
+	if (m < 1 || m > 12)
+		return NULL;
+
+	sprintf(buf, "%s %d, %d", mons[m - 1], d, y);
+
+	return buf;
+}
+
+
 
 int get_today(void)
 {
@@ -471,7 +498,6 @@ void chmap_print(void)
 
 	gen_hmap();
 
-	printf("Activity log and heatmap:\n\n");
 	for (d = 0; d < 7; d++) {
 		printf("        %s", ws[d]);
 		for (w = 0; w < 30; w++) {

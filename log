@@ -1,3 +1,11 @@
+@alpha 0.0.5:
+        Optimized the display of the '--list' mode:
+        * Refactored the entire 'list_print()';
+        * it now looks much more aesthetic.
+
+        Refactored the parsing logic of parse:
+        * 'rt.comments' is now a 'char **'.
+
 @alpha 0.0.4:
         Optimized the display of the '--chmap' mode.
 
