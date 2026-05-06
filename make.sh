@@ -1,2 +1,2 @@
 #!/bin/bash
-gcc main.c -o apr
+gcc main.c parser.c output.c utils.c -o apr
