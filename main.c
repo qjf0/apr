@@ -1,5 +1,4 @@
-
-/* apr @alpha 0.1.0
+/* apr @alpha 0.1.1
  * https://github.com/qjf0/apr
  *
  * Maintainer: qjf0 <https://github.com/qjf0>
@@ -13,14 +12,15 @@ struct runtime rt = {0};
 
 #define OUTC (sizeof(outs) / sizeof(outs[0]))
 static struct out_mode outs[] = {
-        {"--debug",  out_dbg},
-        {"--list",   out_list},
-        {"--unimap", out_unimap}
+        {"--debug",    out_dbg},
+        {"--list",     out_list},
+        {"--unimap",   out_unimap},
 };
 
 #define PMODC (sizeof(pmod) / sizeof(pmod[0]))
 static struct parse_mode pmod[] = {
         {".c", parser_c},
+        {".cpp", parser_c}
 };
 
 int main(int argc, char **argv)
@@ -29,6 +29,9 @@ int main(int argc, char **argv)
 
         if (argc == 2 && !strcmp(argv[1], "--help")) {
                 help();
+                return EXIT_SUCCESS;
+        } else if (argc == 2 && !strcmp(argv[1], "--version")) {
+                version();
                 return EXIT_SUCCESS;
         } else if (argc != 4) {
                 help();
@@ -57,9 +60,22 @@ void help(void)
         printf("usage: apr <operation> [...]\n");
         printf("operations:\n");
         printf("       apr --help                       to view all available commands\n\n");
+        printf("       apr --version                    display version information\n\n");
         printf("       apr --list [path] [ext]          list all items on your terminal\n\n");
         printf("       apr --unimap [path] [ext]        print out a unicode‑based heatmap\n");
         printf("                                        on your terminal\n");
+}
+
+void version(void)
+{
+        printf("\n");
+        printf("     .d8888b. 88d888b. 88d888b.     |  @alpha 0.1.1\n");
+        printf("     88'  `88 88'  `88 88'  `88     |  Copyright (C) 2026-2026 qjf0\n");
+        printf("     88.  .88 88.  .88 88           |\n");
+        printf("     `88888P8 88Y888P' dP           |\n");
+        printf("              88                    |\n");
+        printf("              dP                    |\n");
+        printf("\n");
 }
 
 void add(struct ent *e)
@@ -125,5 +141,6 @@ void quit(void)
                         free(rt.ents[i].cmts[j]);
                 free(rt.ents[i].cmts);
         }
+
         free(rt.ents);
 }

@@ -88,6 +88,7 @@ void genmap(void);                      /* fill heatmap matrix */
  * implemented in main.c
  */
 void add(struct ent *e);
+void version(void);
 void load(void);
 void quit(void);
 void help(void);
