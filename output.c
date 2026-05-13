@@ -99,8 +99,7 @@ void out_list(void)
 		snprintf(desc, sizeof(desc), "%s %s - %s",
 			 e->set, e->id, e->title);
 
-
-		printf("\t%-66s \033[90m[%s]\033[0m\n", desc, e->file);
+		printf("\t%-66s \033[90m[%s]\033[0m\n\n", desc, e->file);
 
 		for (j = 0; j < e->cmtc; ++j) {
 			if (e->cmts[j][0] == '\0')

@@ -69,12 +69,12 @@ void help(void)
 void version(void)
 {
         printf("\n");
-        printf("     .d8888b. 88d888b. 88d888b.     |  @alpha 0.1.1\n");
-        printf("     88'  `88 88'  `88 88'  `88     |  Copyright (C) 2026-2026 qjf0\n");
-        printf("     88.  .88 88.  .88 88           |\n");
-        printf("     `88888P8 88Y888P' dP           |\n");
-        printf("              88                    |\n");
-        printf("              dP                    |\n");
+        printf("     .d8888b. 88d888b. 88d888b.            apr @alpha 0.1.2\n");
+        printf("     88'  `88 88'  `88 88'  `88                            \n");
+        printf("     88.  .88 88.  .88 88                                  \n");
+        printf("     `88888P8 88Y888P' dP                                  \n");
+        printf("              88                    https://github.com/qjf0\n");
+        printf("              dP               Copyright (C) 2026-2026 qjf0\n");
         printf("\n");
 }
 
