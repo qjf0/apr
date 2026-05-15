@@ -1,3 +1,17 @@
+@alpha 0.1.3:
+        Added a new heatmap output mode:
+        * unlike the previous character-based terminal output,
+          using 'apr --imgmap' will generate a PNG format heatmap
+          named 'output.png' directly in the directory.
+
+        * This feature is currently under debugging,
+          although it is already functional.
+
+
+        Optimized the output of 'apr --version':
+        * It now prints a multicolored apr ASCII art logo, reminiscent of the
+          classic Apple logo.
+
 @alpha 0.1.2:
         Optimized the output of 'apr --version'.
         Optimized the output of 'apr --list'.
@@ -9,11 +23,11 @@
         All code has been refactored,
         and the project directory structure is now as follows:
                 .
-                ├── main.c      / main program /
-                ├── apr.h       / all types and function declarations /
-                ├── output.c    / all output functions /
-                ├── parser.c    / all parsing functions /
-                └── utils.c     / all utility functions */
+                ├── main.c      / main program
+                ├── apr.h       / all types and function declarations
+                ├── output.c    / all output functions
+                ├── parser.c    / all parsing functions
+                └── utils.c     / all utility functions
 
         The refactored code structure is now highly modularized,
         ensuring a clean separation of concerns and superior readability.

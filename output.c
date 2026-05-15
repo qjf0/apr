@@ -144,3 +144,9 @@ void out_unimap(void)
 	printf("\n\tLatest: %s              ░:0, ▒:(0,3], ▓:(3,8], █:(8,∞)\n\n",
 	       ntod(rt.entc > 0 ? rt.ents[0].date : 0));
 }
+
+void out_imgmap(void)
+{
+        genmap();
+        export_heatmap_png("output.png");
+}

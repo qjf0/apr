@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <stdint.h>
 
 /* parsed file entry */
 struct ent {
@@ -67,6 +68,7 @@ int get_today(void);
 char *ntod(int date);
 int getwday(int d);
 char *readcmt(FILE *fp);
+void export_heatmap_png(const char *filename);
 
 /*
  * metadata parser logic
@@ -81,6 +83,7 @@ struct ent *parser_c(const char *path);
 void out_dbg(void);                     /* debug output mode */
 void out_list(void);                    /* list view mode */
 void out_unimap(void);                  /* unicode heatmap mode */
+void out_imgmap(void);                  /* image heatmap mode */
 void genmap(void);                      /* fill heatmap matrix */
 
 /*

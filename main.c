@@ -1,4 +1,4 @@
-/* apr @alpha 0.1.1
+/* apr @alpha 0.1.3
  * https://github.com/qjf0/apr
  *
  * Maintainer: qjf0 <https://github.com/qjf0>
@@ -15,6 +15,7 @@ static struct out_mode outs[] = {
         {"--debug",    out_dbg},
         {"--list",     out_list},
         {"--unimap",   out_unimap},
+        {"--imgmap",   out_imgmap}
 };
 
 #define PMODC (sizeof(pmod) / sizeof(pmod[0]))
@@ -63,19 +64,37 @@ void help(void)
         printf("       apr --version                    display version information\n\n");
         printf("       apr --list [path] [ext]          list all items on your terminal\n\n");
         printf("       apr --unimap [path] [ext]        print out a unicode‑based heatmap\n");
-        printf("                                        on your terminal\n");
+        printf("                                        on your terminal\n\n");
+        printf("       apr --imgmap [path] [ext]        An output.png heatmap will be\n");
+        printf("                                        generated in the directory\n");
 }
 
 void version(void)
 {
-        printf("\n");
-        printf("     .d8888b. 88d888b. 88d888b.            apr @alpha 0.1.2\n");
-        printf("     88'  `88 88'  `88 88'  `88                            \n");
-        printf("     88.  .88 88.  .88 88                                  \n");
-        printf("     `88888P8 88Y888P' dP                                  \n");
-        printf("              88                    https://github.com/qjf0\n");
-        printf("              dP               Copyright (C) 2026-2026 qjf0\n");
-        printf("\n");
+	#define COL_GRN "\x1b[32m"       /* Green */
+	#define COL_YEL "\x1b[33m"       /* Yellow */
+	#define COL_ORG "\x1b[38;5;208m" /* Orange */
+	#define COL_RED "\x1b[31m"       /* Red */
+	#define COL_PUR "\x1b[35m"       /* Purple */
+	#define COL_BLU "\x1b[34m"       /* Blue */
+	#define COL_RST "\x1b[0m"        /* Reset */
+
+	printf("\n");
+	printf(COL_GRN "     .d8888b. 88d888b. 88d888b. " COL_RST "            apr @alpha 0.1.3\n");
+	printf(COL_YEL "     88'  `88 88'  `88 88'  `88 " COL_RST "                            \n");
+	printf(COL_ORG "     88.  .88 88.  .88 88       " COL_RST "                            \n");
+	printf(COL_RED "     `88888P8 88Y888P' dP       " COL_RST "                            \n");
+	printf(COL_PUR "              88                " COL_RST "     https://github.com/qjf0\n");
+	printf(COL_BLU "              dP                " COL_RST "Copyright (C) 2026-2026 qjf0\n");
+	printf("\n");
+
+	#undef COL_GRN
+	#undef COL_YEL
+	#undef COL_ORG
+	#undef COL_RED
+	#undef COL_PUR
+	#undef COL_BLU
+	#undef COL_RST
 }
 
 void add(struct ent *e)
